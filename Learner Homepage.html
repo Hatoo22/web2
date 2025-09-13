@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner Homepage</title>
+  <style>
+  /* عام */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+header {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+}
+
+/* اللوقو + الاسم */
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* مسافة بين الصورة والنص */
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;       
+  object-fit: cover;       
+  border: 2px solid #3e92b5; 
+}
+
+.brand {
+  color: #071b45;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: .3px;
+}
+
+/* زر تسجيل الخروج */
+.signout {
+  color: #dc2626;
+  text-decoration: none;
+  font-weight: 600;
+}
+.signout:hover {
+  opacity: .85;
+}
+
+/* الصندوق الأبيض */
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:20px;
+  margin:24px auto;
+  max-width:900px;          
+}
+
+/* تنسيق جملة الترحيب مع الكارد*/
+.card .welcome{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:12px;
+}
+
+/* صورة العرض*/
+.card .avatar{
+  width:72px; height:72px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:24px;
+  background:#e0ecff; color:#1d4ed8;
+}
+
+/* تقسيم اماكن ال label */
+.card .grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+.card .field label{ display:block; font-size:12px; color:#6b7280; }/*تنسيق شكل كلمات الlabel*/
+.card .field p{ margin:2px 0 0; font-weight:600; }/*تنسيق البيانات*/
+
+.table-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:20px;
+  margin:24px auto;
+  max-width:900px;          
+}
+
+ /* الجدول */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse: collapse; }
+  table, th, td { border: 2px solid #333; }
+  thead th { background:#d8e1f3; }
+  th, td { padding: 10px; text-align: center; }
+
+.controls{ 
+    width:100%; 
+    display:flex; 
+    justify-content:flex-end; 
+    gap:8px;
+    padding-bottom: 15px;
+}
+
+.rec-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:20px;
+  margin:24px auto;
+  max-width:900px;          
+}
+
+.Recommended-Q{
+
+    width:100%; 
+    display:flex; 
+    justify-content:flex-end; 
+    gap:8px;
+    padding-bottom: 15px;
+}
+
+.correct{
+ background:#87cc8e; 
+ padding:0 3px; 
+ border-radius:3px;
+ border: 20px; }
+
+  </style>
+</head>
+<body>
+  <!-- Header -->
+<header>
+  <div class="container bar">
+    <div class="logo-wrap">
+      <img src="logo.png" alt="Logo" class="logo">
+      <span class="brand">Tech Queiz</span>
+    </div>
+    <a class="signout" href="signup.html">Sign Out</a>
+  </div>
+</header>
+
+<main class="site-container">
+  <div class="card">
+    <div class="welcome">
+      <div class="avatar" id="avatar">SJ</div>
+      <div>
+        <h2 id="welcomeTitle" >Welcome, Sarah! 🎓</h2>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label>First Name</label>
+        <p id="pfFirst">Sarah</p>
+      </div>
+      
+      <div class="field">
+        <label>Last Name</label>
+        <p id="pfLast">Johnson</p>
+      </div>
+      <div class="field" style="grid-column:1 / -1">
+        <label>Email Address</label>
+        <p id="pfEmail">sarah@mail.com</p>
+      </div>
+    </div>
+  </div>
+
+<div class="table-card">
+  <h2>All Available Quizzes</h2>
+
+  <div class="controls">
+    <select>
+      <option>All topics</option>
+      <option>UX/UI</option>
+      <option>Attacker</option>
+      <option>Coding</option>
+    </select>
+    <button>Filter</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Topic</th>
+          <th>Educator</th>
+          <th>Number of Questions</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>UX</td>
+          <td>
+            <div class="educator">
+              <img src="teacher1.jpg" alt="Alex Brown" width="56" height="56">
+              <div class="teacher-name">Alex Brown</div>
+            </div>
+          </td>
+          <td>40</td>
+          <td class="action"><a href="#">Take Quiz</a></td>
+        </tr>
+
+        <tr>
+          <td>Attack</td>
+          <td>
+            <div class="educator">
+              <img src="teacher2.jpg" alt="Mike" width="56" height="56">
+              <div class="teacher-name">Mike</div>
+            </div>
+          </td>
+          <td>20</td>
+          <td class="action">NO Quiz yet!</a></td>
+        </tr>
+
+        <tr>
+          <td>Coding</td>
+          <td>
+            <div class="educator">
+              <img src="teacher1.jpg" alt="John" width="56" height="56">
+              <div class="teacher-name">John</div>
+            </div>
+          </td>
+          <td>30</td>
+          <td class="action"><a href="#">Take Quiz</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!--قسم الاسئلة  -->
+<div class="rec-card">
+  <h2>Recommended Questions</h2>
+  <a class="Recommended-Q" href="#">Recommend a Question</a>
+
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Topic</th>
+        <th>Educator</th>
+        <th>Question</th>
+        <th>Status</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>UX</td>
+        <td>
+          <div class="educator">
+            <img src="teacher1.jpg" alt="John" width="56" height="56">
+            <div class="teacher-name">Alex Brown</div>
+          </div>
+        </td>
+        <td class="qcell">
+          <img src="Q1.png" alt="__" width="90" height="70">
+          <div class="q-text">What is the main goal of a wireframe?</div>
+          <ul class="answers">
+            <li>A) Choose final colors
+            <li class="correct">B) Define page structure and layout</li>
+            <li>C) Backend logic</li>
+            <li>D) Design animations</li>
+          </ul>
+        </td>
+        <td>Approved</td>
+        <td>Great Question!</td>
+      </tr>
+
+      <tr>
+        <td>Attack</td>
+        <td>
+          <div class="educator">
+            <img src="teacher2.jpg" alt="John" width="56" height="56">
+            <div class="teacher-name">Mike</div>
+          </div>
+        </td>
+        <td class="qcell">
+          <img class="q-photo" src="Q2.png" alt="—" width="90" height="70">
+          <div class="q-text">Which is the strongest password?</div>
+          <ul class="answers">
+            <li>A) 12345678</li>
+            <li>B) Summer2024</li>
+            <li class="correct">C) R4!q9_mT2#</li>
+            <li>D) p@ssword</li>
+          </ul>
+        </td>
+        <td>Pending</td>
+        <td>—</td>
+      </tr>
+     
+            <tr>
+        <td>Coding</td>
+        <td>
+          <div class="educator">
+            <img src="teacher1.jpg" alt="John" width="56" height="56">
+            <div class="teacher-name">John</div>
+          </div>
+        </td>
+        <td class="qcell">
+          <img class="q-photo" src="Q3.png" alt="—" width="110" height="70">
+          <div class="q-text">Which one is NOT a programming language?</div>
+          <ul class="answers">
+            <li>A) javaScript</li>
+             <li class="correct">B) HTML</li>
+            <li>C) CSS</li>
+            <li>D) Python</li>
+          </ul>
+        </td>
+        <td >Disapproved</td>
+        <td>the question has more than one correct answer (HTML and CSS)</td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+</div>
+  
+</main>
+</body>
+</html>
