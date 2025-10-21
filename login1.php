@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // التوجيه حسب النوع
             if ($row['userType'] == 'educator') {
-                header("Location: educator.html");///////// change to php
+                header("Location: educator.php");///////// change to php
             } elseif ($row['userType'] == 'learner') {
                 header("Location: LearnerHomepage.php"); ////////change to php
             }
