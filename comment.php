@@ -2,7 +2,7 @@
 include("db_connect.php"); // ملف الاتصال بقاعدة البيانات
 
 
-$quizID = isset($_GET['quizID']) ? intval($_GET['quizID']) ;
+$quizID = isset($_GET['quizID']) ? intval($_GET['quizID']) :0 ;
 
 $sql = "SELECT * FROM quizfeedback WHERE quizID = $quizID ORDER BY date DESC";
 $result = $conn->query($sql);
