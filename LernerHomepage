@@ -1,0 +1,388 @@
+<?php
+
+session_start();
+
+if (empty($_SESSION['user_id']) || ($_SESSION['userType'] ?? '') !== 'learner') {
+  $msg  = 'Please log in as a learner to continue';
+  $next = urlencode($_SERVER['REQUEST_URI']); // يرجّعك لنفس الصفحة بعد تسجيل الدخول
+  header('Location: login.php?err='.urlencode($msg).'&next='.$next);
+  exit;
+}
+
+
+$con=mysqli_connect('localhost','root','','quizzes (2)');
+
+
+// جلب المواضيع من قاعدة البيانات// جلب المواضيع
+$topics = [];
+$sql = "SELECT id, topicName FROM topic";
+$result = mysqli_query($con, $sql);
+while ($result && $row = mysqli_fetch_assoc($result)) { $topics[] = $row; }
+
+// تحديد نوع الطلب والقيمة المختارة
+// --- جلب الكويزات (قبل الـ HTML) ---
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$topicFilter = ($method === 'POST' && isset($_POST['topic_id'])) ? (int)$_POST['topic_id'] : 0;
+
+$query = "SELECT q.id AS quiz_id, t.topicName,
+                 u.firstName AS educatorFirst, u.lastName AS educatorLast,
+                 COUNT(qq.id) AS questionCount
+          FROM quiz q
+          JOIN topic t ON q.topicID = t.id
+          JOIN user  u ON q.educatorID = u.id
+          LEFT JOIN quizquestion qq ON qq.quizID = q.id";
+
+if ($method === 'POST' && $topicFilter > 0) {
+    $query .= " WHERE q.topicID = $topicFilter";
+}
+
+$query .= " GROUP BY q.id, t.topicName, u.firstName, u.lastName";
+
+$quizzes = [];
+$res = mysqli_query($con, $query);
+while ($res && $row = mysqli_fetch_assoc($res)) { $quizzes[] = $row; }
+// --- نهاية جلب الكويزات ---
+
+
+
+// جلب الأسئلة المقترحة
+
+
+$user_id = (int)($_SESSION['user_id'] ?? 0);
+
+$myRecs = [];
+$sqlRec = "SELECT 
+             r.id,
+             r.question,
+             r.questionFigureFileName,
+             r.status,
+             r.comments,
+             t.topicName,
+             u.firstName, 
+             u.lastName,
+             u.photoFileName AS educatorPhoto
+           FROM recommendedquestion r
+           JOIN quiz  q ON r.quizID = q.id
+           JOIN topic t ON q.topicID = t.id
+           JOIN user  u ON q.educatorID = u.id
+           WHERE r.learnerID = $user_id
+           ORDER BY r.id DESC";
+$resRec = mysqli_query($con, $sqlRec);
+while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
+
+
+?>
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner Homepage</title>
+    <link rel="stylesheet" href="style.css">
+
+  <style>
+  /* عام */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+}
+
+
+.brand {
+  color: #071b45;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: .3px;
+}
+
+
+/* الصندوق الأبيض */
+.card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:20px;
+  margin:24px auto;
+  max-width:900px;          
+}
+
+/* تنسيق جملة الترحيب مع الكارد*/
+.card .welcome{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:12px;
+}
+
+/* صورة العرض*/
+.card .avatar{
+  width:72px; height:72px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:24px;
+  background:#e0ecff; color:#1d4ed8;
+}
+
+/* تقسيم اماكن ال label */
+.card .grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:10px;
+}
+.card .field label{ display:block; font-size:12px; color:#6b7280; }/*تنسيق شكل كلمات الlabel*/
+.card .field p{ margin:2px 0 0; font-weight:600; }/*تنسيق البيانات*/
+
+.table-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:20px;
+  margin:24px auto;
+  max-width:900px;          
+}
+
+ /* الجدول */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse: collapse; }
+  table, th, td { border: 2px solid #333; }
+  thead th { background:#d8e1f3; }
+  th, td { padding: 10px; text-align: center; }
+
+.controls{ 
+    width:100%; 
+    display:flex; 
+    justify-content:flex-end; 
+    gap:8px;
+    padding-bottom: 15px;
+}
+
+.rec-card{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  padding:20px;
+  margin:24px auto;
+  max-width:900px;          
+}
+
+.Recommended-Q{
+
+    width:100%; 
+    display:flex; 
+    justify-content:flex-end; 
+    gap:8px;
+    padding-bottom: 15px;
+}
+
+.correct{
+ background:#87cc8e; 
+ padding:0 3px; 
+ border-radius:3px;
+ border: 20px; }
+
+  </style>
+</head>
+<body>
+  <!-- Header -->
+<header>
+    <div class="logo">
+      <img src="uploads/users/<?= $user['photoFileName'] ?: 'default.png' ?>" width="72" height="72" style="border-radius:50%" alt="logo">
+      <span>TechQuiz</span>
+    </div>
+
+    
+
+
+
+     <div class="logout">
+    <a href="index.html">Log out</a>
+  </div>
+  </header>
+
+
+
+
+<main class="site-container">
+  <div class="card">
+    <div class="welcome">
+      <div class="avatar" id="avatar">
+      <?= substr(htmlspecialchars($user['firstName'] ?? 'L'),0,1) . substr(htmlspecialchars($user['lastName'] ?? 'H'),0,1) ?>
+    </div>
+       
+      <div>
+        <h2 id="welcomeTitle" >Welcome, <?= htmlspecialchars($user['firstName' & 'lastName'] ?? 'Learner') ?>! 🎓</h2>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label>First Name</label>
+        <p id="pfFirst"><?= htmlspecialchars($user['firstName'] ?? '') ?></p>
+      </div>
+      
+      <div class="field">
+        <label>Last Name</label>
+        <p id="pfLast"><?= htmlspecialchars($user['lastName'] ?? '') ?></p>
+      </div>
+      <div class="field" style="grid-column:1 / -1">
+        <label>Email Address</label>
+        <p id="pfEmail"><?= htmlspecialchars($user['emailAddress'] ?? '') ?></p>
+      </div>
+    </div>
+  </div>
+
+<div class="table-card">
+  <h2>All Available Quizzes</h2>
+
+  <div class="controls">
+  <form method="post" style="display:flex; gap:8px; align-items:center;">
+    <label for="topic_id" style="display:none">Topic</label>
+    <select name="topic_id" id="topic_id">
+      <option value="0">All topics</option>
+      <?php foreach ($topics as $tp): ?>
+        <option value="<?= $tp['id'] ?>" <?= ($topicFilter==$tp['id'])?'selected':'' ?>>
+          <?= htmlspecialchars($tp['topicName']) ?>
+        </option>
+      <?php endforeach; ?>
+    </select>
+    <button type="submit">Filter</button>
+   
+  </form>
+</div>
+
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Topic</th>
+          <th>Educator</th>
+          <th>Number of Questions</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+<tbody>
+  <?php if (!$quizzes): ?>
+    <tr><td colspan="4">No quizzes found</td></tr>
+  <?php else: foreach ($quizzes as $q): ?>
+    <tr>
+      <td><?= htmlspecialchars($q['topicName']) ?></td>
+      <td>
+        <div class="educator">
+          <!-- إن عندك صور للمعلّم حطيها هنا؛ غير كذا اكتفي بالاسم -->
+          <div class="teacher-name">
+            <?= htmlspecialchars($q['educatorFirst'].' '.$q['educatorLast']) ?>
+          </div>
+        </div>
+      </td>
+      <td><?= (int)$q['questionCount'] ?></td>
+      <td class="action">
+        <?php if ((int)$q['questionCount'] > 0): ?>
+          <a href="take_quiz.php?quiz_id=<?= (int)$q['quiz_id'] ?>">Take Quiz</a>
+       <?php else: ?>
+  <em>NO Quiz yet!</em>
+<?php endif; ?>
+      </td>
+    </tr>
+  <?php endforeach; endif; ?>
+</tbody>
+
+    </table>
+  </div>
+</div>
+
+<!--قسم الاسئلة  -->
+<div class="rec-card">
+  <h2>Recommended Questions</h2>
+  <a class="Recommended-Q" href="Recommend.html">Recommend a Question</a>
+
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Topic</th>
+        <th>Educator</th>
+        <th>Question</th>
+        <th>Status</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+<tbody>
+  <?php if (!$myRecs): ?>
+    <tr><td colspan="5">You didn't recommend any question yet.</td></tr>
+  <?php else: foreach ($myRecs as $r): ?>
+    <tr>
+      <!-- Topic -->
+      <td><?= htmlspecialchars($r['topicName']) ?></td>
+
+      <!-- Educator: صورة + اسم -->
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+          <img src="uploads/users/<?= htmlspecialchars($r['educatorPhoto'] ?: 'default.png') ?>"
+               alt="Educator" width="36" height="36" style="border-radius:50%;object-fit:cover;">
+          <span><?= htmlspecialchars($r['firstName'].' '.$r['lastName']) ?></span>
+        </div>
+      </td>
+
+      <!-- Question: نص + صورة السؤال (إن وجدت) -->
+      <td>
+        <div class="q-text"><?= htmlspecialchars($r['question']) ?></div>
+        <?php if (!empty($r['questionFigureFileName'])): ?>
+          <div style="margin-top:6px;">
+            <img src="image/teacher/<?= htmlspecialchars($r['questionFigureFileName']) ?>"
+                 alt="Question figure" width="90" height="70" style="object-fit:cover;">
+          </div>
+        <?php endif; ?>
+      </td>
+
+      <!-- Status -->
+      <td><?= htmlspecialchars($r['status']) ?></td>
+
+      <!-- Comments -->
+      <td><?= htmlspecialchars($r['comments'] ?? '—') ?></td>
+    </tr>
+  <?php endforeach; endif; ?>
+</tbody>
+
+
+
+  </table>
+</div>
+</div>
+  
+</main>
+
+
+<footer>
+        <div class="footer-left">
+            <h4 >Contact Us</h4>
+            <p>📞 +966 5555 12345</p>
+            <p>📧 TechQuiz@example.com</p>
+        </div>
+      
+    </footer>
+</body>
+</html>
+
+
+
