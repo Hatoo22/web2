@@ -2,7 +2,7 @@
 
 session_start();
 
-if (empty($_SESSION['user_id']) || ($_SESSION['userType'] ?? '') !== 'learner') {
+if (empty($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'learner') {
   $msg  = 'Please log in as a learner to continue';
   $next = urlencode($_SERVER['REQUEST_URI']); // يرجّعك لنفس الصفحة بعد تسجيل الدخول
   header('Location: login.php?err='.urlencode($msg).'&next='.$next);
@@ -10,13 +10,13 @@ if (empty($_SESSION['user_id']) || ($_SESSION['userType'] ?? '') !== 'learner') 
 }
 
 
-$con=mysqli_connect('localhost','root','','quizzes (2)');
+include("db_connect.php"); // ملف الاتصال بقاعدة البيانات
 
 
 // جلب المواضيع من قاعدة البيانات// جلب المواضيع
 $topics = [];
 $sql = "SELECT id, topicName FROM topic";
-$result = mysqli_query($con, $sql);
+$result = mysqli_query($conn, $sql);
 while ($result && $row = mysqli_fetch_assoc($result)) { $topics[] = $row; }
 
 // تحديد نوع الطلب والقيمة المختارة
@@ -39,7 +39,7 @@ if ($method === 'POST' && $topicFilter > 0) {
 $query .= " GROUP BY q.id, t.topicName, u.firstName, u.lastName";
 
 $quizzes = [];
-$res = mysqli_query($con, $query);
+$res = mysqli_query($conn, $query);
 while ($res && $row = mysqli_fetch_assoc($res)) { $quizzes[] = $row; }
 // --- نهاية جلب الكويزات ---
 
@@ -67,7 +67,7 @@ $sqlRec = "SELECT
            JOIN user  u ON q.educatorID = u.id
            WHERE r.learnerID = $user_id
            ORDER BY r.id DESC";
-$resRec = mysqli_query($con, $sqlRec);
+$resRec = mysqli_query($conn, $sqlRec);
 while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
 
 
@@ -204,17 +204,16 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
 <body>
   <!-- Header -->
 <header>
-    <div class="logo">
-      <img src="uploads/users/<?= $user['photoFileName'] ?: 'default.png' ?>" width="72" height="72" style="border-radius:50%" alt="logo">
+     <div class="logo">
+      <img src="image/logo.png" alt="logo">
       <span>TechQuiz</span>
     </div>
 
     
 
-
-
      <div class="logout">
-    <a href="index.html">Log out</a>
+         
+    <a href="logout.php">Log out </a> 
   </div>
   </header>
 
@@ -223,6 +222,8 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
 
 <main class="site-container">
   <div class="card">
+            <img src="uploads/users/<?= $user['photoFileName'] ?: 'default.png' ?>" width="72" height="72" style="border-radius:50%" alt="logo">
+
     <div class="welcome">
       <div class="avatar" id="avatar">
       <?= substr(htmlspecialchars($user['firstName'] ?? 'L'),0,1) . substr(htmlspecialchars($user['lastName'] ?? 'H'),0,1) ?>
@@ -383,6 +384,5 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
     </footer>
 </body>
 </html>
-
 
 
