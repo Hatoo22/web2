@@ -2,13 +2,13 @@
 // ====================================================================
 // 🔹 Start the PHP session to manage user authentication
 // ===================================================================
-include 'db_connection.php';
+include 'db_connect.php';
 
 session_start();
 
 // Check if a user is logged in and if the user type is "educator"
 // This ensures that only educators can access this page
-if (!isset($_SESSION['userType']) || $_SESSION['userType'] !== 'educator') {
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'educator') {
     // Redirect unauthorized users back to the login page
     header("Location: login.php?error=unauthorized");
     exit();
@@ -17,7 +17,7 @@ if (!isset($_SESSION['userType']) || $_SESSION['userType'] !== 'educator') {
 // Include the database connection file
 
 // Retrieve the educator's ID from the session variable
-$educatorID = $_SESSION['userID'];
+$educatorID = $_SESSION['user_id'];
 
 // ====================================================================
 // 🔹 Retrieve educator personal information from the database
@@ -34,6 +34,8 @@ $user = $stmt->get_result()->fetch_assoc();
 <head>
 <meta charset="UTF-8">
 <title>Educator Dashboard - TechQuiz</title>
+      <link rel="stylesheet" href="style.css">
+
 
 <style>
 /* =========================================================
@@ -48,27 +50,12 @@ body {
 main { padding: 20px; }
 
 /* ---------- Header Style ---------- */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #004080;
-  color: white;
-  padding: 10px 20px;
-}
-header img.logo {
-  width: 60px;
+.logo {
+  width: 80px;   
   height: auto;
-  margin-right: 10px;
+  margin-right: 15px;
+  vertical-align: middle;
 }
-header .logout a {
-  color: white;
-  text-decoration: none;
-  background: #ff5555;
-  padding: 6px 12px;
-  border-radius: 4px;
-}
-header .logout a:hover { background: #ff2222; }
 
 /* ---------- Profile Section ---------- */
 .profile-pic {
@@ -123,12 +110,7 @@ th { background: #f0f0f0; }
 .review-form button:hover { background: #0066cc; }
 
 /* ---------- Footer Styling ---------- */
-footer {
-  background: #004080;
-  color: white;
-  text-align: center;
-  padding: 20px 0;
-}
+
 </style>
 </head>
 
@@ -136,15 +118,20 @@ footer {
 <!-- ============================================================
      🔹 Header Section (Logo and Logout button)
      ============================================================ -->
-<header>
-  <div>
-    <img src="image/logo.png" alt="logo" class="logo">
-    <span>TechQuiz</span>
+  <header>
+    <div class="logo">
+      <img src="image/logo.png" alt="logo">
+      <span>TechQuiz</span>
+    </div>
+
+    
+
+     <div class="logout">
+         
+    <a href="logout.php">Log out </a> 
   </div>
-  <div class="logout">
-    <a href="logout.php">Log out</a>
-  </div>
-</header>
+  
+  </header>
 
 <main>
   <!-- ============================================================
@@ -332,10 +319,13 @@ footer {
      🔹 Footer Section
      ============================================================ -->
 <footer>
-  <h4>Contact Us</h4>
-  <p>📞 +966 5555 12345</p>
-  <p>📧 TechQuiz@example.com</p>
-</footer>
+        <div class="footer-left">
+            <h4 >Contact Us</h4>
+            <p>📞 +966 5555 12345</p>
+            <p>📧 TechQuiz@example.com</p>
+        </div>
+      
+    </footer>
 
 </body>
 </html>
