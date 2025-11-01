@@ -14,7 +14,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'educator') {
     exit();
 }
 
-// Include the database connection file
 
 // Retrieve the educator's ID from the session variable
 $educatorID = $_SESSION['user_id'];
@@ -120,7 +119,7 @@ th { background: #f0f0f0; }
      ============================================================ -->
   <header>
     <div class="logo">
-      <img src="image/logo.png" alt="logo">
+      <img src="images/logo.png" alt="logo">
       <span>TechQuiz</span>
     </div>
 
