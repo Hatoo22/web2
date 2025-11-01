@@ -41,7 +41,7 @@ if(isset($_GET['delete'])){
     mysqli_query($conn, "DELETE FROM QuizQuestion WHERE id = $questionID");
 
     // Redirect back to the quiz page
-    header("Location: quiz_page.php?id=$quizID");
+    header("Location: quiz.php?id=$quizID");
     exit();
 }
 
@@ -135,7 +135,7 @@ $result = mysqli_query($conn, $query);
 
             // Edit and Delete links
             echo "<td><a href='edit_question.php?id=".$row['id']."'>Edit</a></td>";
-            echo "<td><a href='quiz_page.php?id=$quizID&delete=".$row['id']."' onclick=\"return confirm('Are you sure you want to delete this question?');\">Delete</a></td>";
+            echo "<td><a href='quiz.php?id=$quizID&delete=".$row['id']."' onclick=\"return confirm('Are you sure you want to delete this question?');\">Delete</a></td>";
             echo "</tr>";
         }
     } else {
