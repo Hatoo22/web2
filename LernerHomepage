@@ -21,7 +21,7 @@ while ($result && $row = mysqli_fetch_assoc($result)) { $topics[] = $row; }
 
 // تحديد نوع الطلب والقيمة المختارة
 // --- جلب الكويزات (قبل الـ HTML) ---
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$method = $_SERVER['REQUEST_METHOD'] ?? 'POST';
 $topicFilter = ($method === 'POST' && isset($_POST['topic_id'])) ? (int)$_POST['topic_id'] : 0;
 
 $query = "SELECT q.id AS quiz_id, t.topicName,
@@ -222,7 +222,7 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
 
 <main class="site-container">
   <div class="card">
-            <img src="uploads/users/<?= $user['photoFileName'] ?: 'default.png' ?>" width="72" height="72" style="border-radius:50%" alt="logo">
+            <img src="image/<?= $user['photoFileName'] ?: 'default.png' ?>" width="72" height="72" style="border-radius:50%" alt="logo">
 
     <div class="welcome">
       <div class="avatar" id="avatar">
@@ -314,7 +314,7 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
 <!--قسم الاسئلة  -->
 <div class="rec-card">
   <h2>Recommended Questions</h2>
-  <a class="Recommended-Q" href="Recommend.html">Recommend a Question</a>
+  <a class="Recommended-Q" href="Recommend.php">Recommend a Question</a>
 
 
 <div class="table-wrap">
@@ -339,18 +339,18 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
       <!-- Educator: صورة + اسم -->
       <td>
         <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
-          <img src="uploads/users/<?= htmlspecialchars($r['educatorPhoto'] ?: 'default.png') ?>"
+
+          <img src="image/<?= htmlspecialchars($r['educatorPhoto'] ?: 'default.png') ?>"
                alt="Educator" width="36" height="36" style="border-radius:50%;object-fit:cover;">
           <span><?= htmlspecialchars($r['firstName'].' '.$r['lastName']) ?></span>
         </div>
       </td>
 
-      <!-- Question: نص + صورة السؤال (إن وجدت) -->
       <td>
         <div class="q-text"><?= htmlspecialchars($r['question']) ?></div>
         <?php if (!empty($r['questionFigureFileName'])): ?>
           <div style="margin-top:6px;">
-            <img src="image/teacher/<?= htmlspecialchars($r['questionFigureFileName']) ?>"
+            <img src="image/<?= htmlspecialchars($r['questionFigureFileName']) ?>"
                  alt="Question figure" width="90" height="70" style="object-fit:cover;">
           </div>
         <?php endif; ?>
