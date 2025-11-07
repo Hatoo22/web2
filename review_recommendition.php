@@ -1,0 +1,86 @@
+<?php
+// ====================================================================
+// 🔹 Start session and include DB connection
+// ====================================================================
+session_start();
+include 'db_connect.php';
+
+// --------------------------------------------------------------------
+// 🔹 Check if educator is logged in
+// --------------------------------------------------------------------
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'educator') {
+    header("Location: login.php?error=unauthorized");
+    exit();
+}
+
+// --------------------------------------------------------------------
+// 🔹 Check if form was submitted properly
+// --------------------------------------------------------------------
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $recommendID = intval($_POST['recommendID']);
+    $status = $_POST['status'] ?? '';
+    $comment = trim($_POST['comment'] ?? '');
+
+    // تحقق من أن القيم المطلوبة موجودة
+    if (empty($recommendID) || empty($status)) {
+        header("Location: educator.php?error=missingData");
+        exit();
+    }
+
+    // ----------------------------------------------------------------
+    // 🔹 1. استرجاع بيانات السؤال المقترح
+    // ----------------------------------------------------------------
+    $query = "SELECT * FROM recommendedquestion WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $recommendID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $recommend = $result->fetch_assoc();
+
+    if (!$recommend) {
+        header("Location: educator.php?error=notfound");
+        exit();
+    }
+
+    // ----------------------------------------------------------------
+    // 🔹 2. تحديث الحالة والتعليق (العمود اسمه comments)
+    // ----------------------------------------------------------------
+    $update = "UPDATE recommendedquestion SET status = ?, comments = ? WHERE id = ?";
+    $stmt = $conn->prepare($update);
+    $stmt->bind_param("ssi", $status, $comment, $recommendID);
+    $stmt->execute();
+
+    // ----------------------------------------------------------------
+    // 🔹 3. إذا تمت الموافقة → أضف السؤال إلى جدول quizquestion
+    // ----------------------------------------------------------------
+    if ($status === 'approved') {
+        $insert = "INSERT INTO quizquestion 
+                    (quizID, question, questionFigureFileName, answerA, answerB, answerC, answerD, correctAnswer)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($insert);
+        $stmt->bind_param(
+            "isssssss",
+            $recommend['quizID'],
+            $recommend['question'],
+            $recommend['questionFigureFileName'],
+            $recommend['answerA'],
+            $recommend['answerB'],
+            $recommend['answerC'],
+            $recommend['answerD'],
+            $recommend['correctAnswer']
+        );
+        $stmt->execute();
+    }
+
+    // ----------------------------------------------------------------
+    // 🔹 4. إعادة التوجيه إلى صفحة educator
+    // ----------------------------------------------------------------
+    header("Location: educator.php?success=reviewSaved");
+    exit();
+
+} else {
+    // إذا دخل المستخدم الصفحة مباشرة بدون POST
+    header("Location: educator.php");
+    exit();
+}
+?>
