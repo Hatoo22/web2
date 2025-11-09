@@ -8,9 +8,30 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'learner')
 }
 include("db_connect.php");
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header("Location: learner_home.php"); exit; }
+
 $quiz_id = (int)($_POST['quiz_id'] ?? 0);
 $question_ids = $_POST['question_ids'] ?? [];
 if (!$quiz_id || !is_array($question_ids) || count($question_ids)==0) { echo "Invalid submission."; exit; }
+
+//
+// ✅ جلب تفاصيل الاختبار (الموضوع والمعلم)
+//
+$qinfo = $conn->prepare("
+  SELECT t.topicName, u.firstName AS educatorFirst, u.lastName AS educatorLast
+  FROM quiz q
+  JOIN topic t ON q.topicID = t.id
+  JOIN user u ON q.educatorID = u.id
+  WHERE q.id = ?
+");
+$qinfo->bind_param("i", $quiz_id);
+$qinfo->execute();
+$result = $qinfo->get_result();
+$quizDetails = $result->fetch_assoc();
+$qinfo->close();
+
+//
+// ✅ جلب الإجابات الصحيحة
+//
 $placeholders = implode(',', array_fill(0, count($question_ids), '?'));
 $sql = "SELECT id, correctAnswer FROM quizquestion WHERE id IN ($placeholders)";
 $stmt = $conn->prepare($sql);
@@ -26,6 +47,10 @@ $res = $stmt->get_result();
 $corrects = [];
 while ($r = $res->fetch_assoc()) { $corrects[$r['id']] = $r['correctAnswer']; }
 $stmt->close();
+
+//
+// ✅ حساب النتيجة
+//
 $total = count($question_ids);
 $scoreCount = 0;
 foreach ($question_ids as $qid) {
@@ -35,10 +60,18 @@ foreach ($question_ids as $qid) {
   if ($userAns && $correct && $userAns === $correct) $scoreCount++;
 }
 $scorePercent = round(($scoreCount/$total)*100);
+
+//
+// ✅ حفظ النتيجة في قاعدة البيانات
+//
 $ins = $conn->prepare("INSERT INTO takenquiz (quizID,score) VALUES (?,?)");
 $ins->bind_param("ii",$quiz_id,$scorePercent);
 $ins->execute();
 $ins->close();
+
+//
+// ✅ تحديد الفيديو المناسب للنتيجة
+//
 $reaction = '';
 if ($scorePercent >= 80) $reaction = 'videos/excellent.mp4';
 elseif ($scorePercent >= 50) $reaction = 'videos/good.mp4';
@@ -64,8 +97,19 @@ else $reaction = 'videos/try_again.mp4';
 </header>
 <main class="container">
   <div class="card">
+
+    <!-- ✅ عرض تفاصيل الاختبار والمعلم -->
+    <?php if ($quizDetails): ?>
+      <h3>Topic: <?=htmlspecialchars($quizDetails['topicName'])?></h3>
+      <p>Educator: <?=htmlspecialchars($quizDetails['educatorFirst'].' '.$quizDetails['educatorLast'])?></p>
+      <hr>
+    <?php endif; ?>
+
+    <!-- ✅ عرض النتيجة -->
     <h2>Your Score: <?=htmlspecialchars($scorePercent)?>%</h2>
     <p>Correct: <?=htmlspecialchars($scoreCount)?> / <?=htmlspecialchars($total)?></p>
+
+    <!-- ✅ عرض الفيديو المناسب -->
     <?php if($reaction): ?>
       <div>
         <p>Reaction:</p>
@@ -74,6 +118,8 @@ else $reaction = 'videos/try_again.mp4';
         </video>
       </div>
     <?php endif; ?>
+
+    <!-- ✅ نموذج التقييم -->
     <form action="submit_feedback.php" method="post">
       <input type="hidden" name="quiz_id" value="<?=htmlspecialchars($quiz_id)?>">
       <label>Rate this quiz:
@@ -88,6 +134,7 @@ else $reaction = 'videos/try_again.mp4';
       <label>Comments:<br><textarea name="comments" rows="4" cols="60"></textarea></label><br><br>
       <button type="submit">Submit Feedback & Return to Homepage</button>
     </form>
+
   </div>
 </main>
 <footer>
