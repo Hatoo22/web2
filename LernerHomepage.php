@@ -4,14 +4,25 @@
 session_start();
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'learner') {
-  $msg  = 'Please log in as a learner to continue';
+  $msg = 'Please log in as a learner to continue';
   $next = urlencode($_SERVER['REQUEST_URI']); // يرجّعك لنفس الصفحة بعد تسجيل الدخول
   header('Location: login.php?err='.urlencode($msg).'&next='.$next);
+  
   exit;
 }
 
-
 include("db_connect.php"); // ملف الاتصال بقاعدة البيانات
+
+// جلب المواضيع من قاعدة البيانات// جلب المواضي
+$topics = [];
+$sql = "SELECT id, topicName FROM topic";
+$result = mysqli_query($conn, $sql);
+while ($result && $row = mysqli_fetch_assoc($result)) { $topics[] = $row; }
+
+$topicFilter = 0; // ما عاد نستخدم POST، بس عشان الـ HTML ما يعطيك خطأ
+
+
+
 
 
 // ✅ احضري بيانات المستخدم من جدول `user` وتحققي أنه Learner
@@ -40,35 +51,22 @@ if ($resUser && $resUser->num_rows === 1) {
 }
 
 
-// جلب المواضيع من قاعدة البيانات// جلب المواضي
-$topics = [];
-$sql = "SELECT id, topicName FROM topic";
-$result = mysqli_query($conn, $sql);
-while ($result && $row = mysqli_fetch_assoc($result)) { $topics[] = $row; }
 
-// تحديد نوع الطلب والقيمة المختارة
-// --- جلب الكويزات (قبل الـ HTML) ---
-$method = $_SERVER['REQUEST_METHOD'] ?? 'POST';
-$topicFilter = ($method === 'POST' && isset($_POST['topic_id'])) ? (int)$_POST['topic_id'] : 0;
 
+// --- جلب كل الكويزات لعرضها أول ما تفتح الصفحة (قبل الـ HTML) ---
 $query = "SELECT q.id AS quiz_id, t.topicName,
                  u.firstName AS educatorFirst, u.lastName AS educatorLast,
                  COUNT(qq.id) AS questionCount
           FROM quiz q
           JOIN topic t ON q.topicID = t.id
           JOIN user  u ON q.educatorID = u.id
-          LEFT JOIN quizquestion qq ON qq.quizID = q.id";
-
-if ($method === 'POST' && $topicFilter > 0) {
-    $query .= " WHERE q.topicID = $topicFilter";
-}
-
-$query .= " GROUP BY q.id, t.topicName, u.firstName, u.lastName";
+          LEFT JOIN quizquestion qq ON qq.quizID = q.id
+          GROUP BY q.id, t.topicName, u.firstName, u.lastName";
 
 $quizzes = [];
 $res = mysqli_query($conn, $query);
 while ($res && $row = mysqli_fetch_assoc($res)) { $quizzes[] = $row; }
-// --- نهاية جلب الكويزات ---
+
 
 
 
@@ -286,21 +284,18 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
 <div class="table-card">
   <h2>All Available Quizzes</h2>
 
-  <div class="controls">
-  <form method="post" style="display:flex; gap:8px; align-items:center;">
+<div class="controls">
     <label for="topic_id" style="display:none">Topic</label>
     <select name="topic_id" id="topic_id">
       <option value="0">All topics</option>
       <?php foreach ($topics as $tp): ?>
-        <option value="<?= $tp['id'] ?>" <?= ($topicFilter==$tp['id'])?'selected':'' ?>>
+        <option value="<?= $tp['id'] ?>">
           <?= htmlspecialchars($tp['topicName']) ?>
         </option>
       <?php endforeach; ?>
     </select>
-    <button type="submit">Filter</button>
-   
-  </form>
 </div>
+
 
 
   <div class="table-wrap">
@@ -313,7 +308,7 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
           <th>Action</th>
         </tr>
       </thead>
-<tbody>
+<tbody id="quizzesBody">
   <?php if (!$quizzes): ?>
     <tr><td colspan="4">No quizzes found</td></tr>
   <?php else: foreach ($quizzes as $q): ?>
@@ -321,7 +316,6 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
       <td><?= htmlspecialchars($q['topicName']) ?></td>
       <td>
         <div class="educator">
-          <!-- إن عندك صور للمعلّم حطيها هنا؛ غير كذا اكتفي بالاسم -->
           <div class="teacher-name">
             <?= htmlspecialchars($q['educatorFirst'].' '.$q['educatorLast']) ?>
           </div>
@@ -331,13 +325,14 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
       <td class="action">
         <?php if ((int)$q['questionCount'] > 0): ?>
           <a href="take_quiz.php?quiz_id=<?= (int)$q['quiz_id'] ?>">Take Quiz</a>
-       <?php else: ?>
-  <em>NO Quiz yet!</em>
-<?php endif; ?>
+        <?php else: ?>
+          <em>NO Quiz yet!</em>
+        <?php endif; ?>
       </td>
     </tr>
   <?php endforeach; endif; ?>
 </tbody>
+
 
     </table>
   </div>
@@ -414,7 +409,59 @@ while ($resRec && $row = mysqli_fetch_assoc($resRec)) { $myRecs[] = $row; }
         </div>
       
     </footer>
+  
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<script>
+$(function () {
+
+    $('#topic_id').on('change', function () {
+        var topicId = $(this).val();
+
+        $.ajax({
+            url: 'fetch_quizzes.php',    // الملف اللي بنسويه بعد شوي
+            type: 'GET',
+            data: { topic_id: topicId },
+            dataType: 'json',
+            success: function (data) {
+                var rows = '';
+
+                if (!data || data.length === 0) {
+                    rows = '<tr><td colspan="4">No quizzes found</td></tr>';
+                } else {
+                    data.forEach(function (q) {
+                        rows += '<tr>' +
+                                    '<td>' + q.topicName + '</td>' +
+                                    '<td>' +
+                                      '<div class="educator">' +
+                                        '<div class="teacher-name">' +
+                                          q.educatorFirst + ' ' + q.educatorLast +
+                                        '</div>' +
+                                      '</div>' +
+                                    '</td>' +
+                                    '<td>' + q.questionCount + '</td>' +
+                                    '<td class="action">' +
+                                      (parseInt(q.questionCount) > 0
+                                        ? '<a href="take_quiz.php?quiz_id=' + q.quiz_id + '">Take Quiz</a>'
+                                        : '<em>NO Quiz yet!</em>') +
+                                    '</td>' +
+                                '</tr>';
+                    });
+                }
+
+                $('#quizzesBody').html(rows);
+            },
+            error: function (xhr, status, error) {
+                console.log('AJAX error:', status, error);
+            }
+        });
+
+    });
+
+});
+</script>
+
+  
+  
 </body>
 </html>
-
-
