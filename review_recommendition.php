@@ -9,21 +9,24 @@ include 'db_connect.php';
 // 🔹 Check if educator is logged in
 // --------------------------------------------------------------------
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'educator') {
-    header("Location: login.php?error=unauthorized");
+    echo json_encode(["status" => "error", "message" => "unauthorized"]);
     exit();
 }
 
 // --------------------------------------------------------------------
-// 🔹 Check if form was submitted properly
+// 🔹 Must be POST (AJAX request)
 // --------------------------------------------------------------------
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    header("Content-Type: application/json");
+
     $recommendID = intval($_POST['recommendID']);
     $status = $_POST['status'] ?? '';
     $comment = trim($_POST['comment'] ?? '');
 
     // تحقق من أن القيم المطلوبة موجودة
     if (empty($recommendID) || empty($status)) {
-        header("Location: educator.php?error=missingData");
+        echo json_encode(["status" => "error", "message" => "missingData"]);
         exit();
     }
 
@@ -38,12 +41,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $recommend = $result->fetch_assoc();
 
     if (!$recommend) {
-        header("Location: educator.php?error=notfound");
+        echo json_encode(["status" => "error", "message" => "notfound"]);
         exit();
     }
 
     // ----------------------------------------------------------------
-    // 🔹 2. تحديث الحالة والتعليق (العمود اسمه comments)
+    // 🔹 2. تحديث الحالة والتعليق
     // ----------------------------------------------------------------
     $update = "UPDATE recommendedquestion SET status = ?, comments = ? WHERE id = ?";
     $stmt = $conn->prepare($update);
@@ -51,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $stmt->execute();
 
     // ----------------------------------------------------------------
-    // 🔹 3. إذا تمت الموافقة → أضف السؤال إلى جدول quizquestion
+    // 🔹 3. إذا تمت الموافقة → إضافة السؤال لجدول quizquestion
     // ----------------------------------------------------------------
     if ($status === 'approved') {
         $insert = "INSERT INTO quizquestion 
@@ -73,14 +76,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     // ----------------------------------------------------------------
-    // 🔹 4. إعادة التوجيه إلى صفحة educator
+   
     // ----------------------------------------------------------------
-    header("Location: educator.php?success=reviewSaved");
+    echo json_encode(["status" => "success", "message" => "reviewSaved"]);
     exit();
 
 } else {
-    // إذا دخل المستخدم الصفحة مباشرة بدون POST
-    header("Location: educator.php");
+    // إذا مو POST
+    echo json_encode(["status" => "error", "message" => "invalidRequest"]);
     exit();
 }
 ?>
