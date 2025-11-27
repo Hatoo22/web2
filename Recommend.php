@@ -134,6 +134,43 @@ while ($resE && $row = $resE->fetch_assoc()) { $educators[] = $row; }
     <p>📧 TechQuiz@example.com</p>
   </div>
 </footer>
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // When the topic dropdown changes
+    $('select[name="topic_id"]').on('change', function() {
+        var topicID = $(this).val(); // get selected topic id
+        if(topicID) {
+            $.ajax({
+                url: 'get_educators.php', // PHP page that returns educators as JSON
+                type: 'POST',
+                data: { topic_id: topicID },
+                dataType: 'json',
+                success: function(data) {
+                    var $educatorSelect = $('select[name="educator_id"]');
+                    $educatorSelect.empty(); // clear previous options
+                    $educatorSelect.append('<option value="" disabled selected>Select an educator</option>');
+                    if(data.length > 0){
+                        $.each(data, function(i, educator) {
+                            $educatorSelect.append(
+                                $('<option>', {
+                                    value: educator.id,
+                                    text: educator.firstName + ' ' + educator.lastName
+                                })
+                            );
+                        });
+                    } else {
+                        $educatorSelect.append('<option disabled>No educators found</option>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error: ', error);
+                }
+            });
+        }
+    });
+});
+</script>
 </body>
 </html>
 
