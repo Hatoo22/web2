@@ -2,11 +2,7 @@
 session_start();
 require __DIR__ . '/db_connect.php';
 
-// Optional: Check user is logged in
-if (empty($_SESSION['user_id'])) {
-    echo json_encode([]);
-    exit;
-}
+
 
 if(!isset($_POST['topic_id'])) {
     echo json_encode([]);
@@ -15,7 +11,7 @@ if(!isset($_POST['topic_id'])) {
 
 $topic_id = (int)$_POST['topic_id'];
 
-// Fetch all educators who have quizzes in this topic
+
 $sql = "
     SELECT DISTINCT u.id, u.firstName, u.lastName
     FROM user u
