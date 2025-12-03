@@ -4,7 +4,7 @@
 session_start();
 require __DIR__ . '/db_connect.php';
 
-// (اختياري) تأكيد أنه ليرنر
+
 if (empty($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'learner') {
   $msg  = 'Please log in as a learner to continue';
   $next = urlencode($_SERVER['REQUEST_URI']);
@@ -12,13 +12,12 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_type'] ?? '') !== 'learner')
   exit;
 }
 
-// ==== جلب التوبيكس ====
 $topics = [];
 $sqlTopics = "SELECT id, topicName FROM topic ORDER BY topicName ASC";
 $resT = $conn->query($sqlTopics);
 while ($resT && $row = $resT->fetch_assoc()) { $topics[] = $row; }
 
-// ==== جلب أسماء المعلمين (educators) ====
+
 $educators = [];
 $sqlEdu = "SELECT id, firstName, lastName FROM `user` WHERE userType='educator' ORDER BY firstName, lastName";
 $resE = $conn->query($sqlEdu);
@@ -61,10 +60,7 @@ while ($resE && $row = $resE->fetch_assoc()) { $educators[] = $row; }
   <div class="box">
     <h3>Recommend a Question</h3>
 
-    <!--
-      ملاحظة: غيّري action لملف الحفظ لاحقًا (مثلاً save_recommend.php)
-      وحطي عملية الإدخال هناك بـ INSERT INTO recommendedquestion (...)
-    -->
+    
  <form action="/web2/ويب2/save_recommend.php" method="post" enctype="multipart/form-data">
 
 
@@ -92,7 +88,7 @@ while ($resE && $row = $resE->fetch_assoc()) { $educators[] = $row; }
         <option value="D">D</option>
       </select>
 
-      <!-- ===== Topic (من الداتابيس) ===== -->
+      
       <label>Topic:</label>
       <select name="topic_id" required>
         <option value="" disabled selected>Select a topic</option>
@@ -107,7 +103,7 @@ while ($resE && $row = $resE->fetch_assoc()) { $educators[] = $row; }
         <?php endif; ?>
       </select>
 
-      <!-- ===== Educator (من الداتابيس) ===== -->
+
       <label>Educator:</label>
       <select name="educator_id" required>
         <option value="" disabled selected>Select an educator</option>
